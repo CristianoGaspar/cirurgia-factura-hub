@@ -12,7 +12,8 @@ import {
   Activity,
   DollarSign,
   Clock,
-  User
+  User,
+  Download
 } from "lucide-react"
 import {
   Dialog,
@@ -171,6 +172,57 @@ const Surgeries = () => {
     }
   }
 
+  const exportToCSV = () => {
+    const headers = [
+      'ID',
+      'Paciente',
+      'ID Paciente',
+      'Procedimento',
+      'Cirurgião',
+      'Data',
+      'Horário',
+      'Sala',
+      'Duração',
+      'Complexidade',
+      'Valor Base',
+      'Multiplicador',
+      'Valor Final',
+      'Status',
+      'Observações'
+    ]
+
+    const csvContent = [
+      headers.join(','),
+      ...filteredSurgeries.map(surgery => [
+        surgery.id,
+        `"${surgery.patientName}"`,
+        surgery.patientId,
+        `"${surgery.procedure}"`,
+        `"${surgery.surgeon}"`,
+        surgery.date,
+        surgery.time,
+        `"${surgery.room}"`,
+        surgery.duration,
+        surgery.complexity,
+        surgery.baseValue,
+        surgery.complexityMultiplier,
+        surgery.finalValue,
+        surgery.status,
+        `"${surgery.notes || ''}"`
+      ].join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `cirurgias_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -182,13 +234,23 @@ const Surgeries = () => {
           </p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-gradient-primary hover:opacity-90 transition-opacity">
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Cirurgia
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={exportToCSV}
+            className="border-primary text-primary hover:bg-primary hover:text-white"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Exportar CSV
+          </Button>
+          
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-primary hover:opacity-90 transition-opacity">
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Cirurgia
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Agendar Nova Cirurgia</DialogTitle>
@@ -311,6 +373,7 @@ const Surgeries = () => {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Stats */}
